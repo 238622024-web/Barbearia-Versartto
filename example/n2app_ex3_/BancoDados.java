@@ -1,5 +1,6 @@
 package com.example.n2app_ex3_;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -7,14 +8,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class BancoDados extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "barbearia.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Tabela de Usuários
     private static final String CREATE_TABLE_USERS = "CREATE TABLE users (" +
             "user_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "nome TEXT NOT NULL, " +
             "email TEXT UNIQUE NOT NULL, " +
-            "senha TEXT NOT NULL);";
+            "senha TEXT NOT NULL, " +
+            "user_type TEXT NOT NULL DEFAULT 'Usuário');"; // Added user_type column
 
     // Tabela de Agendamentos
     private static final String CREATE_TABLE_APPOINTMENTS = "CREATE TABLE appointments (" +
@@ -43,6 +45,11 @@ public class BancoDados extends SQLiteOpenHelper {
             "FOREIGN KEY(user_id) REFERENCES users(user_id), " +
             "FOREIGN KEY(appointment_id) REFERENCES appointments(appointment_id));";
 
+    // Tabela de Especialidades (para o admin)
+    private static final String CREATE_TABLE_SPECIALTIES = "CREATE TABLE specialties (" +
+            "specialty_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "name TEXT NOT NULL UNIQUE);";
+
     public BancoDados(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -53,15 +60,25 @@ public class BancoDados extends SQLiteOpenHelper {
         db.execSQL(CREATE_TABLE_APPOINTMENTS);
         db.execSQL(CREATE_TABLE_CALENDAR);
         db.execSQL(CREATE_TABLE_HISTORY);
+        db.execSQL(CREATE_TABLE_SPECIALTIES);
+        insertDefaultSpecialties(db);
+    }
+
+    private void insertDefaultSpecialties(SQLiteDatabase db) {
+        String[] specialties = {"Corte de Cabelo", "Barba", "Manicure", "Pedicure"};
+        ContentValues values = new ContentValues();
+        for (String specialty : specialties) {
+            values.put("name", specialty);
+            db.insert("specialties", null, values);
+        }
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Se houver uma atualização no banco de dados, você pode adicionar o código aqui
-        db.execSQL("DROP TABLE IF EXISTS history");
-        db.execSQL("DROP TABLE IF EXISTS calendar");
-        db.execSQL("DROP TABLE IF EXISTS appointments");
-        db.execSQL("DROP TABLE IF EXISTS users");
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE users ADD COLUMN user_type TEXT NOT NULL DEFAULT 'Usuário'");
+            db.execSQL(CREATE_TABLE_SPECIALTIES);
+            insertDefaultSpecialties(db);
+        }
     }
 }
