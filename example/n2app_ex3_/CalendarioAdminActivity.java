@@ -25,9 +25,7 @@ import java.util.Locale;
 public class CalendarioAdminActivity extends AppCompatActivity implements AdminScheduleAdapter.OnItemClickListener {
 
     private CalendarView calendarViewAdmin;
-    private RecyclerView recyclerViewAdminSchedules;
     private EditText editTextJustification;
-    private Button buttonReschedule;
     private TextView textViewSelectedDate;
 
     private BancoDados bancoDados;
@@ -45,9 +43,9 @@ public class CalendarioAdminActivity extends AppCompatActivity implements AdminS
 
         bancoDados = new BancoDados(this);
         calendarViewAdmin = findViewById(R.id.calendarViewAdmin);
-        recyclerViewAdminSchedules = findViewById(R.id.recyclerViewAdminSchedules);
+        RecyclerView recyclerViewAdminSchedules = findViewById(R.id.recyclerViewAdminSchedules);
         editTextJustification = findViewById(R.id.editTextJustification);
-        buttonReschedule = findViewById(R.id.buttonReschedule);
+        Button buttonReschedule = findViewById(R.id.buttonReschedule);
         textViewSelectedDate = findViewById(R.id.textViewSelectedDate);
 
         dailyAppointments = new ArrayList<>();
@@ -58,7 +56,7 @@ public class CalendarioAdminActivity extends AppCompatActivity implements AdminS
         calendarViewAdmin.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             String queryDate = formatDate(year, month, dayOfMonth, "yyyy-MM-dd");
             String displayDate = formatDate(year, month, dayOfMonth, "dd/MM/yyyy");
-            textViewSelectedDate.setText("Agendamentos para: " + displayDate);
+            textViewSelectedDate.setText(getString(R.string.schedules_for_date, displayDate));
 
             if (selectedAppointment != null) {
                 dateForReschedule = queryDate;
@@ -89,7 +87,7 @@ public class CalendarioAdminActivity extends AppCompatActivity implements AdminS
         Calendar cal = Calendar.getInstance();
         String initialDate = formatDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), "yyyy-MM-dd");
         String initialDisplayDate = formatDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), "dd/MM/yyyy");
-        textViewSelectedDate.setText("Agendamentos para: " + initialDisplayDate);
+        textViewSelectedDate.setText(getString(R.string.schedules_for_date, initialDisplayDate));
         dateForLoadingList = initialDate;
         loadAppointmentsForDate(initialDate);
     }
