@@ -29,6 +29,7 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         Appointment currentAppointment = appointmentList.get(position);
         holder.textViewUserName.setText(currentAppointment.getUserName());
         holder.textViewService.setText(currentAppointment.getService());
+        holder.textViewProfessional.setText("Profissional: " + currentAppointment.getProfessional());
         String dateTime = currentAppointment.getDate() + " - " + currentAppointment.getTime();
         holder.textViewDateTime.setText(dateTime);
     }
@@ -39,13 +40,14 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
     }
 
     static class ScheduleViewHolder extends RecyclerView.ViewHolder {
-        TextView textViewUserName, textViewService, textViewDateTime;
+        TextView textViewUserName, textViewService, textViewDateTime, textViewProfessional;
 
         ScheduleViewHolder(View view) {
             super(view);
             textViewUserName = view.findViewById(R.id.textViewItemUserName);
             textViewService = view.findViewById(R.id.textViewItemService);
             textViewDateTime = view.findViewById(R.id.textViewItemDateTime);
+            textViewProfessional = view.findViewById(R.id.textViewItemProfessional);
         }
     }
 }

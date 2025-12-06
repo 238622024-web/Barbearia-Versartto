@@ -1,60 +1,113 @@
 package com.example.n2app_ex3_;
 
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.android.material.textfield.TextInputEditText;
 
-public class HistoricoAdapter extends ArrayAdapter<String> {
+import java.util.List;
 
-    private Context mContext;
-    private int mResource;
-    private SharedPreferences sharedPreferences;
+public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.ViewHolder> {
 
-    public HistoricoAdapter(@NonNull Context context, int resource, @NonNull ArrayList<String> objects) {
-        super(context, resource, objects);
-        this.mContext = context;
-        this.mResource = resource;
-        this.sharedPreferences = context.getSharedPreferences(CalendarioActivity.PREFS_NAME, Context.MODE_PRIVATE);
+    private final List<HistoricoItem> historicoItems;
+    private final Context context;
+    private final OnCancelListener cancelListener;
+
+    public interface OnCancelListener {
+        void onCancelRequested(HistoricoItem item, String reason);
+    }
+
+    public HistoricoAdapter(Context context, List<HistoricoItem> historicoItems, OnCancelListener cancelListener) {
+        this.context = context;
+        this.historicoItems = historicoItems;
+        this.cancelListener = cancelListener;
     }
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        String agendamento = getItem(position);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_historico, parent, false);
+        return new ViewHolder(view);
+    }
 
-        LayoutInflater inflater = LayoutInflater.from(mContext);
-        convertView = inflater.inflate(mResource, parent, false);
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        HistoricoItem item = historicoItems.get(position);
 
-        TextView textViewAgendamento = convertView.findViewById(R.id.textViewAgendamento);
-        Button btnCancelar = convertView.findViewById(R.id.btnCancelar);
+        holder.textViewService.setText(item.getService());
+        holder.textViewProfessional.setText("com: " + item.getProfessional());
+        holder.textViewDateTime.setText(item.getDate() + " às " + item.getTime());
 
-        textViewAgendamento.setText(agendamento);
+        // Show status if appointment was rescheduled by admin
+        if (item.getJustification() != null && !item.getJustification().isEmpty()) {
+            holder.textViewStatus.setVisibility(View.VISIBLE);
+            holder.textViewStatus.setText("Reagendado");
+            holder.textViewStatus.setOnClickListener(v -> {
+                 new AlertDialog.Builder(context)
+                        .setTitle("Detalhes do Reagendamento")
+                        .setMessage("Motivo: " + item.getJustification())
+                        .setPositiveButton("OK", null)
+                        .show();
+            });
+        } else {
+            holder.textViewStatus.setVisibility(View.GONE);
+        }
 
-        btnCancelar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Set<String> agendamentos = sharedPreferences.getStringSet(CalendarioActivity.AGENDAMENTOS_KEY, new HashSet<String>());
-                agendamentos.remove(agendamento);
-                sharedPreferences.edit().putStringSet(CalendarioActivity.AGENDAMENTOS_KEY, agendamentos).apply();
-                remove(agendamento);
-                notifyDataSetChanged();
-                Toast.makeText(mContext, "Agendamento cancelado.", Toast.LENGTH_SHORT).show();
-            }
+        // Setup cancellation button
+        holder.btnCancelar.setOnClickListener(v -> {
+            showCancellationDialog(item);
         });
+    }
 
-        return convertView;
+    private void showCancellationDialog(HistoricoItem item) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View dialogView = inflater.inflate(R.layout.dialog_cancel_appointment, null);
+        final TextInputEditText reasonInput = dialogView.findViewById(R.id.editTextCancellationReason);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Solicitar Cancelamento")
+                .setView(dialogView)
+                .setPositiveButton("Enviar Solicitação", (dialog, which) -> {
+                    String reason = reasonInput.getText().toString().trim();
+                    if (reason.isEmpty()) {
+                        Toast.makeText(context, "Por favor, informe um motivo para o cancelamento.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        if (cancelListener != null) {
+                            cancelListener.onCancelRequested(item, reason);
+                        }
+                    }
+                })
+                .setNegativeButton("Voltar", null)
+                .show();
+    }
+
+    @Override
+    public int getItemCount() {
+        return historicoItems.size();
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView textViewService, textViewDateTime, textViewStatus, textViewProfessional;
+        Button btnCancelar;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            textViewService = itemView.findViewById(R.id.textViewAgendamentoServico);
+            textViewProfessional = itemView.findViewById(R.id.textViewAgendamentoProfissional);
+            textViewDateTime = itemView.findViewById(R.id.textViewAgendamentoDataHora);
+            textViewStatus = itemView.findViewById(R.id.textViewStatus);
+            btnCancelar = itemView.findViewById(R.id.btnCancelarAgendamento);
+        }
     }
 }

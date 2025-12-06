@@ -1,6 +1,7 @@
 package com.example.n2app_ex3_;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -21,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
     public EditText editTextUser;
     public EditText editTextPassword;
     public Button buttonEnter;
-    public TextView textViewForgotPassword;
     public Button buttonRecoverPassword;
     public Button buttonCreateAccount;
     private BancoDados dbHelper;
@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
         editTextUser = findViewById(R.id.editTextUser);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonEnter = findViewById(R.id.buttonEnter);
-        textViewForgotPassword = findViewById(R.id.textViewForgotPassword);
         buttonRecoverPassword = findViewById(R.id.buttonRecoverPassword);
         buttonCreateAccount = findViewById(R.id.buttonCreateAccount);
 
@@ -64,10 +63,14 @@ public class MainActivity extends AppCompatActivity {
                     cursor = db.rawQuery(query, new String[]{email, password});
 
                     if (cursor != null && cursor.moveToFirst()) {
-                        int userTypeCol = cursor.getColumnIndex("user_type");
-                        String userType = (userTypeCol != -1) ? cursor.getString(userTypeCol) : "Usuário";
+                        long userId = cursor.getLong(cursor.getColumnIndexOrThrow("user_id"));
+                        String userType = cursor.getString(cursor.getColumnIndexOrThrow("user_type"));
 
-                        if (userType == null) userType = "Usuário";
+                        // Save user session
+                        SharedPreferences userSession = getSharedPreferences("user_session", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = userSession.edit();
+                        editor.putLong("user_id", userId);
+                        editor.apply();
 
                         if ("Administrador".equalsIgnoreCase(userType.trim())) {
                             Intent intent = new Intent(MainActivity.this, AdminActivity.class);
@@ -82,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Email ou senha inválidos.", Toast.LENGTH_SHORT).show();
                     }
                 } catch (Exception e) {
-                    // Show the actual system error message on the screen
                     String errorMessage = e.getMessage();
                     Log.e("LOGIN_CRITICAL_ERROR", "Exception during login: " + errorMessage, e);
                     Toast.makeText(MainActivity.this, "Erro: " + errorMessage, Toast.LENGTH_LONG).show();

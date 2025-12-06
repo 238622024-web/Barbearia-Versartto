@@ -1,9 +1,9 @@
 package com.example.n2app_ex3_;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,15 +12,9 @@ import java.util.List;
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
     private List<User> userList;
-    private OnUserDeleteListener deleteListener;
 
-    public interface OnUserDeleteListener {
-        void onUserDelete(User user);
-    }
-
-    public UserAdapter(List<User> userList, OnUserDeleteListener deleteListener) {
+    public UserAdapter(List<User> userList) {
         this.userList = userList;
-        this.deleteListener = deleteListener;
     }
 
     @NonNull
@@ -35,11 +29,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User currentUser = userList.get(position);
         holder.textViewUserName.setText(currentUser.getName());
-        holder.buttonDeleteUser.setOnClickListener(v -> {
-            if (deleteListener != null) {
-                deleteListener.onUserDelete(currentUser);
-            }
-        });
+        holder.textViewUserType.setText(currentUser.getUserType());
+
+        if ("Administrador".equals(currentUser.getUserType())) {
+            holder.textViewUserType.setBackgroundColor(Color.parseColor("#FFC107")); // Gold for Admin
+        } else {
+            holder.textViewUserType.setBackgroundColor(Color.parseColor("#4CAF50")); // Green for User
+        }
     }
 
     @Override
@@ -48,13 +44,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView textViewUserName;
-        Button buttonDeleteUser;
+        TextView textViewUserName, textViewUserType;
 
         UserViewHolder(View view) {
             super(view);
             textViewUserName = view.findViewById(R.id.textViewUserName);
-            buttonDeleteUser = view.findViewById(R.id.buttonDeleteUser);
+            textViewUserType = view.findViewById(R.id.textViewUserType);
         }
     }
 }
